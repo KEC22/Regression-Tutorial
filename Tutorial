@@ -1,0 +1,92 @@
+#load it into memory
+autos<-read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data",header=FALSE,sep="",as.is=TRUE)
+
+#first five rows
+head(autos,5)
+
+#last five rows 
+tail(autos,5)
+
+#basic statistics of each column
+summary(autos)
+
+#find the structure of the data
+str(autos)
+
+#rename the columns
+colnames(autos)<-c("mpg","cylinders","displacement","horsepower","weight","acceleration","modelYear","orgin","carName")
+
+#change horsepower to numeric 
+auto$hotdrpoert<-as.numeric(autos$horsepower)
+
+#Address missing values (R converst all missing value to NA)
+#na.rm=TRUE is the mean function
+autos$horsepower[is.na(autos$horsepower)]<-mean(autos$horsepower,na.rm=TRUE)
+
+#change to factor
+autos$orgin<-factor(autos$orgin)
+autos$modelYear<-factor(autos$modelYear)
+autos$cylinders<-factor(autos$cylinders)
+
+#remove the car name
+autos$carName<-NULL
+
+#view the structure of the data after the preprocessing
+#creating model-splitting dataset into two sets (training & testing)
+#70/30 split 
+trainSize<-round(nrow(autos)*7.0)
+testSize<-nrow(autos)-trainSize
+
+#output
+trainSize
+testSize
+
+#With random sampling /telling it needs to be as big as the trainSize
+set.seed(123)
+training_indices<-sample(seq_len(nrow(autos)),size=trainSize
+trainSet<-autos[training_indices,]
+testSet<-autos[-training_indices,]
+
+#Build a LM model- uses the MPG as the response variable and all the other variables as the predictors
+model<-lm(formula=trainSet$mpg~.,data=trainSet)
+
+#Statistics concerning your model
+summary(model)
+
+#Multiple R Squared- tells you how well the regression line fits the data (goodness of fit) Value of 1 -perfect fit
+#p-value tells you how significant the predictor variables affect the response variable. Less than 0.05 means the predictor variables have no effect on the response variable
+#Make predictions using test set- confidence level is 95 (the higher the confidence level the wider the range)
+predictions<-predict(model, testSet,interval='predict',level=.95)
+
+#To see the predictions
+head(predictions)
+
+#To see the actual and predicted values
+comparison<-cbind(testSet$mpg,predictions[,1])
+colnames(comparison)<-c("actual","predicted")
+
+#To see the output- two column matrix
+head(comparison)
+
+#To see the summary 
+summary(comparison)
+
+#Use the Mean Absolute Percent Error (MAPE) to measure the accuracy of regression model 
+mape<-(sum(abs(comparison[,1]-comparison[,2])/abs(comparison[,1]))/nrow(comparison))*100
+
+#output
+mape
+
+#To view the results and errors in a table
+mapeTable<-cbind(comparison,abs(comparison[,1]-comparison[,2])/comparison[,1]*100)
+conames(mapeTable)[3],-"absolute percent error"
+head(mapeTable)
+
+#To see the percent error
+sum(mapeTable[,3])/nrow(comparison)
+
+#Making new predictions
+newPrediction <- predict( model, list( cylinders = factor( 4), displacement = 370, horsepower = 150, weight = 3904, acceleration = 12, modelYear = factor( 70), origin = factor( 1)), interval =" predict", level =. 95)
+
+#ouput- first real prediction because it's from unseen data
+newPrediction
